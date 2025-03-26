@@ -89,6 +89,8 @@ def capture():
 @app.route("/verify_live", methods=["POST"])
 def verify_live():
     """Capture an image from the webcam and verify it."""
+    global reference_encodings  # Ensure we use the global reference_encodings
+
     data = request.json
     user_name = data.get("name")
     index = data.get("index")
@@ -103,6 +105,10 @@ def verify_live():
             return jsonify({"match": False, "error": "Name does not match records"})
     except (ValueError, IndexError):
         return jsonify({"match": False, "error": "Invalid voter index"})
+
+    # Reload encodings every time before verification
+    reference_encodings.clear()
+    load_reference_encodings()  # Reload latest images
 
     # Open webcam using OpenCV
     cap = get_camera()
@@ -139,6 +145,7 @@ def verify_live():
         return jsonify({"match": True, "name": user_name})
     else:
         return jsonify({"match": False, "error": "Face does not match our records"})
+
 
 
 @app.route("/success")
